@@ -11,9 +11,10 @@ class CommentController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index($taskId)
     {
-        //
+        $task = Task::findOrFail($taskId);
+        return response()->json($task->comments);
     }
 
     /**
@@ -23,7 +24,7 @@ class CommentController extends Controller
     {
         $request->validate([
             'user_id' => 'required|exists:users,id',
-            'content' => 'required|string',
+            'content' => 'required|string|max:500',
         ]);
 
         $task = Task::findOrFail($taskId);
@@ -39,24 +40,35 @@ class CommentController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show($taskId, $commentId)
     {
-        //
+        $comment = Comment::where('task_id', $taskId)->findOrFail($commentId);
+        return response()->json($comment);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, $taskId, $commentId)
     {
-        //
+        $request->validate([
+            'content' => 'required|string|max:500',
+        ]);
+
+        $comment = Comment::where('task_id', $taskId)->findOrFail($commentId);
+        $comment->update(['content' => $request->content]);
+
+        return response()->json($comment);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy($taskId, $commentId)
     {
-        //
+        $comment = Comment::where('task_id', $taskId)->findOrFail($commentId);
+        $comment->delete();
+
+        return response()->json(['message' => 'Comment deleted successfully'], 204);
     }
 }

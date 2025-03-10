@@ -12,7 +12,7 @@ class BuildingController extends Controller
      */
     public function index()
     {
-        return response()->json(Building::all());
+        return response()->json(Building::with('tasks')->get());
     }
 
     /**
@@ -35,7 +35,7 @@ class BuildingController extends Controller
      */
     public function show(string $id)
     {
-        //
+        return response()->json(Building::with('tasks')->findOrFail($id));
     }
 
     /**
@@ -43,7 +43,16 @@ class BuildingController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $building = Building::findOrFail($id);
+
+        $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'address' => 'nullable|string',
+        ]);
+
+        $building->update($request->all());
+
+        return response()->json($building);
     }
 
     /**
@@ -51,6 +60,9 @@ class BuildingController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $building = Building::findOrFail($id);
+        $building->delete();
+
+        return response()->json(['message' => 'Building deleted successfully'], 204);
     }
 }

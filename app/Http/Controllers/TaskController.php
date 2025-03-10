@@ -13,10 +13,18 @@ class TaskController extends Controller
     public function index(Request $request)
     {
         $tasks = Task::with(['comments', 'building', 'assignedUser'])
-            ->when($request->status, fn($query) => $query->where('status', $request->status))
-            ->when($request->building_id, fn($query) => $query->where('building_id', $request->building_id))
-            ->when($request->assigned_user_id, fn($query) => $query->where('assigned_user_id', $request->assigned_user_id))
-            ->when($request->created_at, fn($query) => $query->whereDate('created_at', $request->created_at))
+            ->when($request->status, function ($query) use ($request) {
+                $query->where('status', $request->status);
+            })
+            ->when($request->building_id, function ($query) use ($request) {
+                $query->where('building_id', $request->building_id);
+            })
+            ->when($request->assigned_user_id, function ($query) use ($request) {
+                $query->where('assigned_user_id', $request->assigned_user_id);
+            })
+            ->when($request->start_date && $request->end_date, function ($query) use ($request) {
+                $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+            })
             ->get();
 
         return response()->json($tasks);
@@ -45,7 +53,7 @@ class TaskController extends Controller
      */
     public function show(string $id)
     {
-        //
+        return response()->json(Task::with(['comments', 'building', 'assignedUser'])->findOrFail($id));
     }
 
     /**
@@ -53,7 +61,19 @@ class TaskController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $task = Task::findOrFail($id);
+
+        $request->validate([
+            'title' => 'sometimes|required|string|max:255',
+            'description' => 'nullable|string',
+            'status' => 'sometimes|required|in:Open,In Progress,Completed,Rejected',
+            'assigned_user_id' => 'nullable|exists:users,id',
+            'building_id' => 'nullable|exists:buildings,id',
+        ]);
+
+        $task->update($request->all());
+
+        return response()->json($task);
     }
 
     /**
@@ -61,6 +81,9 @@ class TaskController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $task = Task::findOrFail($id);
+        $task->delete();
+
+        return response()->json(['message' => 'Task deleted successfully'], 204);
     }
 }
