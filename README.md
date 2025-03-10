@@ -1,66 +1,137 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Laravel Task Management API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+This is a task management system for buildings, developed in Laravel 12 and fully containerized with Docker.
 
-## About Laravel
+## Technologies Used
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Laravel 12
+- PHP 8.2
+- MySQL 8
+- Redis
+- NGINX
+- Docker & Docker Compose
+- PHPUnit for testing
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Installation and Setup
+### Prerequisites
+Before starting, ensure you have installed:
+- Docker and Docker Compose
+- Git
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Step 1: Clone the repository
+```sh
+git clone https://github.com/your-username/laravel-task-management.git
+cd laravel-task-management
+```
 
-## Learning Laravel
+### Step 2: Configure the environment
+Copy the `.env.example` file to `.env` and edit it as needed:
+```sh
+cp .env.example .env
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Step 3: Start the containers
+```sh
+docker-compose up -d
+```
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### Step 4: Install dependencies
+```sh
+docker exec -it laravel_app composer install
+docker exec -it laravel_app php artisan key:generate
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Step 5: Create the database and run migrations
+```sh
+docker exec -it laravel_app php artisan migrate --seed
+```
 
-## Laravel Sponsors
+Your API is now ready.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## API Endpoints
+The API follows a RESTful structure. All responses are in JSON format.
 
-### Premium Partners
+### Buildings
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+| Method | Endpoint               | Description                  |
+|--------|------------------------|------------------------------|
+| `GET`  | `/api/buildings`       | Lists all buildings         |
+| `POST` | `/api/buildings`       | Creates a new building      |
+| `GET`  | `/api/buildings/{id}`  | Retrieves a specific building |
+| `PUT`  | `/api/buildings/{id}`  | Updates a building         |
+| `DELETE` | `/api/buildings/{id}` | Deletes a building         |
 
-## Contributing
+#### Example `POST /api/buildings`
+```json
+{
+  "name": "Burj Khalifa",
+  "address": "Dubai"
+}
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Tasks
 
-## Code of Conduct
+| Method | Endpoint              | Description                   |
+|--------|-----------------------|-------------------------------|
+| `GET`  | `/api/tasks`          | Lists all tasks               |
+| `POST` | `/api/tasks`          | Creates a new task            |
+| `GET`  | `/api/tasks/{id}`     | Retrieves a specific task     |
+| `PUT`  | `/api/tasks/{id}`     | Updates a task                |
+| `DELETE` | `/api/tasks/{id}` | Deletes a task                |
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+#### Example `POST /api/tasks`
+```json
+{
+  "title": "Fix elevator",
+  "description": "Check and repair elevator system",
+  "status": "Open",
+  "assigned_user_id": 1,
+  "building_id": 1
+}
+```
 
-## Security Vulnerabilities
+### Comments
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+| Method | Endpoint                               | Description                     |
+|--------|---------------------------------------|---------------------------------|
+| `GET`  | `/api/tasks/{taskId}/comments`       | Lists comments for a task      |
+| `POST` | `/api/tasks/{taskId}/comments`       | Creates a new comment          |
+| `GET`  | `/api/tasks/{taskId}/comments/{id}`  | Retrieves a specific comment   |
+| `PUT`  | `/api/tasks/{taskId}/comments/{id}`  | Updates a comment              |
+| `DELETE` | `/api/tasks/{taskId}/comments/{id}` | Deletes a comment              |
 
-## License
+#### Example `POST /api/tasks/1/comments`
+```json
+{
+  "user_id": 1,
+  "content": "Started working on this"
+}
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Automated Tests
+To run the tests, execute:
+```sh
+docker exec -it laravel_app php artisan test
+```
+
+The tests cover:
+- Creation, listing, updating, and deletion of Buildings.
+- Creation and listing of Tasks.
+- Creation, listing, updating, and deletion of Comments.
+
+## Filters and Search Parameters
+The `/api/tasks` endpoint supports the following filters:
+
+| Parameter         | Type   | Example                   | Description                             |
+|------------------|--------|--------------------------|-----------------------------------------|
+| `status`        | string | `Open`, `In Progress`    | Filters by task status                 |
+| `building_id`   | int    | `1`                      | Filters by associated building         |
+| `assigned_user_id` | int | `2`                      | Filters by assigned user               |
+| `start_date`    | date   | `2024-03-01`             | Filters tasks created after this date  |
+| `end_date`      | date   | `2024-03-10`             | Filters tasks created before this date |
+
+Example request with filters:
+```sh
+curl "http://localhost:8000/api/tasks?status=Open&start_date=2024-03-01&end_date=2024-03-10"
+```
+
