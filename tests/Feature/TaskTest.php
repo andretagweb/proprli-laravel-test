@@ -2,21 +2,25 @@
 
 namespace Tests\Feature;
 
-use App\Models\Building;
 use App\Models\Task;
+use App\Models\Building;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class TaskTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    /**
+     * Test creating a task.
+     */
+    #[Test]
     public function it_can_create_a_task()
     {
-        $building = Building::factory()->create();
         $user = User::factory()->create();
+        $building = Building::factory()->create();
 
         $response = $this->postJson('/api/tasks', [
             'title' => 'Fix elevator',
@@ -26,11 +30,16 @@ class TaskTest extends TestCase
             'building_id' => $building->id
         ]);
 
-        $response->assertStatus(201);
+        $response->assertStatus(201)
+                 ->assertJsonStructure(['id', 'title', 'status']);
+
         $this->assertDatabaseHas('tasks', ['title' => 'Fix elevator']);
     }
 
-    /** @test */
+    /**
+     * Test listing tasks.
+     */
+    #[Test]
     public function it_can_list_tasks()
     {
         Task::factory()->count(3)->create();
