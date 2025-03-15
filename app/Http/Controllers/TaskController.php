@@ -6,6 +6,8 @@ use App\Http\Requests\StoreTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
 use App\Http\Resources\TaskResource;
 use App\Models\Task;
+use App\Filters\TaskFilters;
+
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -14,16 +16,14 @@ class TaskController extends Controller
     /**
      * Display a listing of the resource with pagination and filtering.
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
-        $tasks = Task::with(['comments', 'building', 'assignedUser'])
-            ->when($request->status, fn($query) => $query->where('status', $request->status))
-            ->when($request->building_id, fn($query) => $query->where('building_id', $request->building_id))
-            ->when($request->assigned_user_id, fn($query) => $query->where('assigned_user_id', $request->assigned_user_id))
-            ->when($request->start_date && $request->end_date, fn($query) => $query->whereBetween('created_at', [$request->start_date, $request->end_date]))
-            ->paginate(10);
-
-        return response()->json(TaskResource::collection($tasks));
+        $perPage = $request->query('per_page', 10);
+        $query = Task::with(['comments', 'building', 'assignedUser']);
+    
+        $filteredTasks = (new TaskFilters($request))->apply($query)->paginate($perPage);
+    
+        return TaskResource::collection($filteredTasks);
     }
 
     /**
