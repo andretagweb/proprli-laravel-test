@@ -17,4 +17,12 @@ class UpdateCommentRequest extends FormRequest
             'content' => 'required|string|max:500',
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'content.required' => 'The comment content is required.',
+            'content.max' => 'The comment cannot exceed 500 characters.',
+        ];
+    }
 }

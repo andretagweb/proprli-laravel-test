@@ -32,32 +32,41 @@ class CommentController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreCommentRequest $request, $taskId): CommentResource
+    public function store(StoreCommentRequest $request, $taskId): JsonResponse
     {
         $comment = $this->commentRepository->createComment($taskId, $request->validated());
 
-        return new CommentResource($comment);
+        return response()->json(new CommentResource($comment), 201);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show($taskId, $commentId): CommentResource
+    public function show($taskId, $commentId): JsonResponse
     {
         $comment = $this->commentRepository->findCommentById($taskId, $commentId);
 
-        return new CommentResource($comment);
+        if (!$comment) {
+            return response()->json(['error' => 'Comment not found'], 404);
+        }
+
+        return response()->json(new CommentResource($comment));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateCommentRequest $request, $taskId, $commentId): CommentResource
+    public function update(UpdateCommentRequest $request, $taskId, $commentId): JsonResponse
     {
         $comment = $this->commentRepository->findCommentById($taskId, $commentId);
+
+        if (!$comment) {
+            return response()->json(['error' => 'Comment not found'], 404);
+        }
+
         $updatedComment = $this->commentRepository->updateComment($comment, $request->validated());
 
-        return new CommentResource($updatedComment);
+        return response()->json(new CommentResource($updatedComment));
     }
 
     /**
@@ -66,8 +75,13 @@ class CommentController extends Controller
     public function destroy($taskId, $commentId): JsonResponse
     {
         $comment = $this->commentRepository->findCommentById($taskId, $commentId);
+
+        if (!$comment) {
+            return response()->json(['error' => 'Comment not found'], 404);
+        }
+
         $this->commentRepository->deleteComment($comment);
 
-        return response()->json(['message' => 'Comment deleted successfully'], 204);
+        return response()->json(['message' => 'Comment deleted successfully'], 200);
     }
 }

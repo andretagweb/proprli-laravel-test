@@ -21,4 +21,16 @@ class UpdateTaskRequest extends FormRequest
             'building_id' => 'nullable|exists:buildings,id',
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'title.required' => 'The task title is required.',
+            'title.max' => 'The title cannot exceed 255 characters.',
+            'status.required' => 'The task status is required.',
+            'status.in' => 'The status must be one of the following: Open, In Progress, Completed, Rejected.',
+            'assigned_user_id.exists' => 'The assigned user does not exist in the database.',
+            'building_id.exists' => 'The specified building does not exist in the database.',
+        ];
+    }
 }

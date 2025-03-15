@@ -18,4 +18,14 @@ class StoreCommentRequest extends FormRequest
             'content' => 'required|string|max:500',
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'user_id.required' => 'The user ID is required.',
+            'user_id.exists' => 'The specified user does not exist in the database.',
+            'content.required' => 'The comment content is required.',
+            'content.max' => 'The comment cannot exceed 500 characters.',
+        ];
+    }
 }
