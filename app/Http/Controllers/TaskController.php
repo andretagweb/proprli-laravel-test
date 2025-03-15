@@ -2,84 +2,65 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreTaskRequest;
+use App\Http\Requests\UpdateTaskRequest;
+use App\Http\Resources\TaskResource;
 use App\Models\Task;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of the resource with pagination and filtering.
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $tasks = Task::with(['comments', 'building', 'assignedUser'])
-            ->when($request->status, function ($query) use ($request) {
-                $query->where('status', $request->status);
-            })
-            ->when($request->building_id, function ($query) use ($request) {
-                $query->where('building_id', $request->building_id);
-            })
-            ->when($request->assigned_user_id, function ($query) use ($request) {
-                $query->where('assigned_user_id', $request->assigned_user_id);
-            })
-            ->when($request->start_date && $request->end_date, function ($query) use ($request) {
-                $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
-            })
-            ->get();
+            ->when($request->status, fn($query) => $query->where('status', $request->status))
+            ->when($request->building_id, fn($query) => $query->where('building_id', $request->building_id))
+            ->when($request->assigned_user_id, fn($query) => $query->where('assigned_user_id', $request->assigned_user_id))
+            ->when($request->start_date && $request->end_date, fn($query) => $query->whereBetween('created_at', [$request->start_date, $request->end_date]))
+            ->paginate(10);
 
-        return response()->json($tasks);
+        return response()->json(TaskResource::collection($tasks));
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreTaskRequest $request): JsonResponse
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'status' => 'required|in:Open,In Progress,Completed,Rejected',
-            'assigned_user_id' => 'nullable|exists:users,id',
-            'building_id' => 'required|exists:buildings,id',
-        ]);
+        $task = Task::create($request->validated());
 
-        $task = Task::create($request->all());
-
-        return response()->json($task, 201);
+        return response()->json(new TaskResource($task), 201);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $id): JsonResponse
     {
-        return response()->json(Task::with(['comments', 'building', 'assignedUser'])->findOrFail($id));
+        $task = Task::with(['comments', 'building', 'assignedUser'])->findOrFail($id);
+
+        return response()->json(new TaskResource($task));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateTaskRequest $request, string $id): JsonResponse
     {
         $task = Task::findOrFail($id);
+        $task->update($request->validated());
 
-        $request->validate([
-            'title' => 'sometimes|required|string|max:255',
-            'description' => 'nullable|string',
-            'status' => 'sometimes|required|in:Open,In Progress,Completed,Rejected',
-            'assigned_user_id' => 'nullable|exists:users,id',
-            'building_id' => 'nullable|exists:buildings,id',
-        ]);
-
-        $task->update($request->all());
-
-        return response()->json($task);
+        return response()->json(new TaskResource($task));
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(string $id): JsonResponse
     {
         $task = Task::findOrFail($id);
         $task->delete();

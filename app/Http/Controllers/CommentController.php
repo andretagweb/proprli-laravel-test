@@ -4,57 +4,60 @@ namespace App\Http\Controllers;
 
 use App\Models\Comment;
 use App\Models\Task;
+use App\Http\Resources\CommentResource;
 use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\UpdateCommentRequest;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class CommentController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index($taskId): JsonResponse
+    public function index($taskId): AnonymousResourceCollection
     {
         $task = Task::findOrFail($taskId);
-        return response()->json($task->comments);
+
+        return CommentResource::collection($task->comments()->paginate(10));
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreCommentRequest $request, $taskId): JsonResponse
+    public function store(StoreCommentRequest $request, $taskId): CommentResource
     {
         $task = Task::findOrFail($taskId);
 
         $comment = $task->comments()->create($request->validated());
 
-        return response()->json($comment, 201);
+        return new CommentResource($comment);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show($taskId, $commentId): JsonResponse
+    public function show($taskId, $commentId): CommentResource
     {
         $comment = Comment::where('task_id', $taskId)->findOrFail($commentId);
-        return response()->json($comment);
+
+        return new CommentResource($comment);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateCommentRequest $request, $taskId, $commentId): JsonResponse
+    public function update(UpdateCommentRequest $request, $taskId, $commentId): CommentResource
     {
         $comment = Comment::where('task_id', $taskId)->findOrFail($commentId);
         $comment->update($request->validated());
 
-        return response()->json($comment);
+        return new CommentResource($comment);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($taskId, $commentId): JsonResponse
+    public function destroy($taskId, $commentId)
     {
         $comment = Comment::where('task_id', $taskId)->findOrFail($commentId);
         $comment->delete();

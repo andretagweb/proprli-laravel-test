@@ -5,44 +5,48 @@ namespace App\Http\Controllers;
 use App\Models\Building;
 use App\Http\Requests\StoreBuildingRequest;
 use App\Http\Requests\UpdateBuildingRequest;
+use App\Http\Resources\BuildingResource;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class BuildingController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(): AnonymousResourceCollection
     {
-        return response()->json(Building::with('tasks')->get());
+        return BuildingResource::collection(Building::with('tasks')->paginate(10));
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreBuildingRequest $request)
+    public function store(StoreBuildingRequest $request): BuildingResource
     {
         $building = Building::create($request->validated());
 
-        return response()->json($building, 201);
+        return new BuildingResource($building);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $id): BuildingResource
     {
-        return response()->json(Building::with('tasks')->findOrFail($id));
+        $building = Building::with('tasks')->findOrFail($id);
+
+        return new BuildingResource($building);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateBuildingRequest $request, string $id)
+    public function update(UpdateBuildingRequest $request, string $id): BuildingResource
     {
         $building = Building::findOrFail($id);
         $building->update($request->validated());
 
-        return response()->json($building);
+        return new BuildingResource($building);
     }
 
     /**
