@@ -22,15 +22,23 @@ class CommentTest extends TestCase
         $user = User::factory()->create();
         $task = Task::factory()->create();
 
-        $response = $this->postJson("/api/tasks/{$task->id}/comments", [
+        $payload = [
             'user_id' => $user->id,
-            'content' => 'This task is now in progress.'
-        ]);
+            'content' => 'This task is now in progress.',
+        ];
+
+        $response = $this->postJson("/api/tasks/{$task->id}/comments", $payload);
 
         $response->assertStatus(201)
-                 ->assertJsonStructure(['id', 'task_id', 'user_id', 'content']);
+                 ->assertJson([
+                     'data' => [
+                         'task_id' => $task->id,
+                         'user_id' => $user->id,
+                         'content' => 'This task is now in progress.'
+                     ]
+                 ]);
 
-        $this->assertDatabaseHas('comments', ['content' => 'This task is now in progress.']);
+        $this->assertDatabaseHas('comments', $payload);
     }
 
     /**
@@ -40,12 +48,37 @@ class CommentTest extends TestCase
     public function it_can_list_comments()
     {
         $task = Task::factory()->create();
-        Comment::factory()->count(2)->create(['task_id' => $task->id]);
+        $comments = Comment::factory()->count(2)->create(['task_id' => $task->id]);
 
         $response = $this->getJson("/api/tasks/{$task->id}/comments");
 
         $response->assertStatus(200)
-                 ->assertJsonCount(2);
+                 ->assertJsonCount(2, 'data') 
+                 ->assertJsonFragment([
+                     'task_id' => $task->id,
+                     'content' => $comments[0]->content
+                 ]);
+    }
+
+    /**
+     * Test getting a single comment.
+     */
+    #[Test]
+    public function it_can_get_a_single_comment()
+    {
+        $comment = Comment::factory()->create();
+
+        $response = $this->getJson("/api/tasks/{$comment->task_id}/comments/{$comment->id}");
+
+        $response->assertStatus(200)
+                 ->assertJson([
+                     'data' => [
+                         'id' => $comment->id,
+                         'task_id' => $comment->task_id,
+                         'user_id' => $comment->user_id,
+                         'content' => $comment->content,
+                     ]
+                 ]);
     }
 
     /**
@@ -56,14 +89,19 @@ class CommentTest extends TestCase
     {
         $comment = Comment::factory()->create();
 
-        $response = $this->putJson("/api/tasks/{$comment->task_id}/comments/{$comment->id}", [
-            'content' => 'Updated comment text.'
-        ]);
+        $updatedContent = ['content' => 'Updated comment text.'];
+
+        $response = $this->putJson("/api/tasks/{$comment->task_id}/comments/{$comment->id}", $updatedContent);
 
         $response->assertStatus(200)
-                 ->assertJsonFragment(['content' => 'Updated comment text.']);
+                 ->assertJson([
+                     'data' => [
+                         'id' => $comment->id,
+                         'content' => 'Updated comment text.'
+                     ]
+                 ]);
 
-        $this->assertDatabaseHas('comments', ['content' => 'Updated comment text.']);
+        $this->assertDatabaseHas('comments', ['id' => $comment->id, 'content' => 'Updated comment text.']);
     }
 
     /**

@@ -8,6 +8,7 @@ use App\Http\Resources\CommentResource;
 use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\UpdateCommentRequest;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\JsonResponse;
 
 class CommentController extends Controller
 {
@@ -16,9 +17,10 @@ class CommentController extends Controller
      */
     public function index($taskId): AnonymousResourceCollection
     {
+        $perPage = request('per_page', 10);
         $task = Task::findOrFail($taskId);
 
-        return CommentResource::collection($task->comments()->paginate(10));
+        return CommentResource::collection($task->comments()->paginate($perPage));
     }
 
     /**
@@ -57,7 +59,7 @@ class CommentController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($taskId, $commentId)
+    public function destroy($taskId, $commentId): JsonResponse
     {
         $comment = Comment::where('task_id', $taskId)->findOrFail($commentId);
         $comment->delete();

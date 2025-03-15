@@ -15,7 +15,8 @@ class BuildingController extends Controller
      */
     public function index(): AnonymousResourceCollection
     {
-        return BuildingResource::collection(Building::with('tasks')->paginate(10));
+        $perPage = request('per_page', 10);
+        return BuildingResource::collection(Building::with('tasks')->paginate($perPage));
     }
 
     /**
