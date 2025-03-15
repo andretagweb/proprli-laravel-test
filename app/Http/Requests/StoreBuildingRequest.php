@@ -24,4 +24,15 @@ class StoreBuildingRequest extends FormRequest
             'address' => 'nullable|string',
         ];
     }
+
+    public function messages()
+    {
+        return [
+            'name.required' => 'The building name is required.',
+            'name.string' => 'The building name must be a valid text.',
+            'name.max' => 'The building name cannot exceed 255 characters.',
+            'address.string' => 'The address must be a valid text.',
+        ];
+    }
+
 }

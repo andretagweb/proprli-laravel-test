@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Comment;
-use App\Models\Task;
+use App\Repositories\CommentRepository;
 use App\Http\Resources\CommentResource;
 use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\UpdateCommentRequest;
@@ -12,15 +11,22 @@ use Illuminate\Http\JsonResponse;
 
 class CommentController extends Controller
 {
+    protected CommentRepository $commentRepository;
+
+    public function __construct(CommentRepository $commentRepository)
+    {
+        $this->commentRepository = $commentRepository;
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index($taskId): AnonymousResourceCollection
     {
         $perPage = request('per_page', 10);
-        $task = Task::findOrFail($taskId);
+        $comments = $this->commentRepository->getCommentsByTask($taskId, $perPage);
 
-        return CommentResource::collection($task->comments()->paginate($perPage));
+        return CommentResource::collection($comments);
     }
 
     /**
@@ -28,9 +34,7 @@ class CommentController extends Controller
      */
     public function store(StoreCommentRequest $request, $taskId): CommentResource
     {
-        $task = Task::findOrFail($taskId);
-
-        $comment = $task->comments()->create($request->validated());
+        $comment = $this->commentRepository->createComment($taskId, $request->validated());
 
         return new CommentResource($comment);
     }
@@ -40,7 +44,7 @@ class CommentController extends Controller
      */
     public function show($taskId, $commentId): CommentResource
     {
-        $comment = Comment::where('task_id', $taskId)->findOrFail($commentId);
+        $comment = $this->commentRepository->findCommentById($taskId, $commentId);
 
         return new CommentResource($comment);
     }
@@ -50,10 +54,10 @@ class CommentController extends Controller
      */
     public function update(UpdateCommentRequest $request, $taskId, $commentId): CommentResource
     {
-        $comment = Comment::where('task_id', $taskId)->findOrFail($commentId);
-        $comment->update($request->validated());
+        $comment = $this->commentRepository->findCommentById($taskId, $commentId);
+        $updatedComment = $this->commentRepository->updateComment($comment, $request->validated());
 
-        return new CommentResource($comment);
+        return new CommentResource($updatedComment);
     }
 
     /**
@@ -61,8 +65,8 @@ class CommentController extends Controller
      */
     public function destroy($taskId, $commentId): JsonResponse
     {
-        $comment = Comment::where('task_id', $taskId)->findOrFail($commentId);
-        $comment->delete();
+        $comment = $this->commentRepository->findCommentById($taskId, $commentId);
+        $this->commentRepository->deleteComment($comment);
 
         return response()->json(['message' => 'Comment deleted successfully'], 204);
     }

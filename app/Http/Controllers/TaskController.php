@@ -2,28 +2,33 @@
 
 namespace App\Http\Controllers;
 
+use App\Repositories\TaskRepository;
 use App\Http\Requests\StoreTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
 use App\Http\Resources\TaskResource;
-use App\Models\Task;
 use App\Filters\TaskFilters;
-
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class TaskController extends Controller
 {
+    protected TaskRepository $taskRepository;
+
+    public function __construct(TaskRepository $taskRepository)
+    {
+        $this->taskRepository = $taskRepository;
+    }
+
     /**
      * Display a listing of the resource with pagination and filtering.
      */
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
         $perPage = $request->query('per_page', 10);
-        $query = Task::with(['comments', 'building', 'assignedUser']);
-    
-        $filteredTasks = (new TaskFilters($request))->apply($query)->paginate($perPage);
-    
-        return TaskResource::collection($filteredTasks);
+        $tasks = $this->taskRepository->getAllTasks(new TaskFilters($request), $perPage);
+
+        return TaskResource::collection($tasks);
     }
 
     /**
@@ -31,7 +36,7 @@ class TaskController extends Controller
      */
     public function store(StoreTaskRequest $request): JsonResponse
     {
-        $task = Task::create($request->validated());
+        $task = $this->taskRepository->createTask($request->validated());
 
         return response()->json(new TaskResource($task), 201);
     }
@@ -41,7 +46,7 @@ class TaskController extends Controller
      */
     public function show(string $id): JsonResponse
     {
-        $task = Task::with(['comments', 'building', 'assignedUser'])->findOrFail($id);
+        $task = $this->taskRepository->findTaskById($id);
 
         return response()->json(new TaskResource($task));
     }
@@ -51,10 +56,10 @@ class TaskController extends Controller
      */
     public function update(UpdateTaskRequest $request, string $id): JsonResponse
     {
-        $task = Task::findOrFail($id);
-        $task->update($request->validated());
+        $task = $this->taskRepository->findTaskById($id);
+        $updatedTask = $this->taskRepository->updateTask($task, $request->validated());
 
-        return response()->json(new TaskResource($task));
+        return response()->json(new TaskResource($updatedTask));
     }
 
     /**
@@ -62,8 +67,8 @@ class TaskController extends Controller
      */
     public function destroy(string $id): JsonResponse
     {
-        $task = Task::findOrFail($id);
-        $task->delete();
+        $task = $this->taskRepository->findTaskById($id);
+        $this->taskRepository->deleteTask($task);
 
         return response()->json(['message' => 'Task deleted successfully'], 204);
     }
