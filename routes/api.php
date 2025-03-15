@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BuildingController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\UserController;
 
 Route::get('/buildings', [BuildingController::class, 'index']);
 Route::post('/buildings', [BuildingController::class, 'store']);
@@ -22,3 +23,5 @@ Route::post('/tasks/{taskId}/comments', [CommentController::class, 'store']); //
 Route::get('/tasks/{taskId}/comments/{commentId}', [CommentController::class, 'show']); // Buscar comentário específico
 Route::put('/tasks/{taskId}/comments/{commentId}', [CommentController::class, 'update']); // Atualizar comentário
 Route::delete('/tasks/{taskId}/comments/{commentId}', [CommentController::class, 'destroy']); // Remover comentário
+
+Route::get('/users', [UserController::class, 'index']);
