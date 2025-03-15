@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Building;
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreBuildingRequest;
+use App\Http\Requests\UpdateBuildingRequest;
 
 class BuildingController extends Controller
 {
@@ -18,14 +19,9 @@ class BuildingController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreBuildingRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'address' => 'nullable|string',
-        ]);
-
-        $building = Building::create($request->all());
+        $building = Building::create($request->validated());
 
         return response()->json($building, 201);
     }
@@ -41,16 +37,10 @@ class BuildingController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateBuildingRequest $request, string $id)
     {
         $building = Building::findOrFail($id);
-
-        $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'address' => 'nullable|string',
-        ]);
-
-        $building->update($request->all());
+        $building->update($request->validated());
 
         return response()->json($building);
     }
